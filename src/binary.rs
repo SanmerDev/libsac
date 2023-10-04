@@ -16,14 +16,25 @@ const SAC_STR16_UNDEF: [u8; 16] = [
     b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' '
 ];
 
-fn write_string<const N: usize>(v: &String, length: usize) -> [u8; N] {
+fn write_string<const N: usize>(v: &String) -> [u8; N] {
     let mut bytes: [u8; N] = [b' '; N];
     let v_bytes = v.as_bytes();
 
-    let length = v_bytes.len().min(length);
+    let length = v_bytes.len().min(N);
     bytes[..length].copy_from_slice(&v_bytes[..length]);
 
     bytes
+}
+
+fn write_string_array<const M: usize, const N: usize>(v: &[String; N]) -> [[u8; M]; N] {
+    let values: Vec<[u8; M]> = v.iter()
+        .map(|s|write_string(s))
+        .collect();
+
+    let mut array = [[b' '; M]; N];
+    array.copy_from_slice(&values);
+
+    array
 }
 
 fn read_string<const N: usize>(v: &[u8; N]) -> String {
@@ -31,6 +42,17 @@ fn read_string<const N: usize>(v: &[u8; N]) -> String {
         .unwrap_or("-12345")
         .trim()
         .to_string()
+}
+
+fn read_string_array<const M: usize, const N: usize>(v: &[[u8; M]; N]) -> [String; N] {
+    let values: Vec<String> = v.iter()
+        .map(|b|read_string(b))
+        .collect();
+
+    let mut array: [String; N] = array::from_fn(|_|String::new());
+    array.clone_from_slice(&values);
+
+    array
 }
 
 // noinspection SpellCheckingInspection
@@ -160,18 +182,6 @@ impl Default for SacBinary {
 
 impl SacBinary {
     pub fn from(v: &SacHeader) -> Self {
-        // string to bytes
-        let mut kt_vec: Vec<[u8; 8]> = v.kt.iter()
-            .map(|s|write_string(s, 8))
-            .collect();
-
-        // fill with default value to 10
-        kt_vec.resize(10, SAC_STR8_UNDEF);
-
-        // vec to array
-        let mut kt = [SAC_STR8_UNDEF; 10];
-        kt.clone_from_slice(&kt_vec);
-
         SacBinary {
             // undef
             internal1: SAC_FLOAT_UNDEF,
@@ -184,7 +194,6 @@ impl SacBinary {
             unused3: [SAC_INT_UNDEF; 8],
             unused4: SAC_BOOL_UNDEF,
 
-            kt,
             delta: v.delta,
             depmin: v.depmin,
             depmax: v.depmax,
@@ -246,39 +255,27 @@ impl SacBinary {
             lpspol: if v.lpspol { 1 } else { 0 },
             lovrok: if v.lovrok { 1 } else { 0 },
             lcalda: if v.lcalda { 1 } else { 0 },
-            kstnm: write_string(&v.kstnm, 8),
-            kevnm: write_string(&v.kevnm, 16),
-            khole: write_string(&v.khole, 8),
-            ko: write_string(&v.ko, 8),
-            ka: write_string(&v.ka, 8),
-            kf: write_string(&v.kf, 8),
-            kuser0: write_string(&v.kuser0, 8),
-            kuser1: write_string(&v.kuser1, 8),
-            kuser2: write_string(&v.kuser2, 8),
-            kcmpnm: write_string(&v.kcmpnm, 8),
-            knetwk: write_string(&v.knetwk, 8),
-            kdatrd: write_string(&v.kdatrd, 8),
-            kinst: write_string(&v.kinst, 8),
+            kstnm: write_string(&v.kstnm),
+            kevnm: write_string(&v.kevnm),
+            khole: write_string(&v.khole),
+            ko: write_string(&v.ko),
+            ka: write_string(&v.ka),
+            kt: write_string_array(&v.kt),
+            kf: write_string(&v.kf),
+            kuser0: write_string(&v.kuser0),
+            kuser1: write_string(&v.kuser1),
+            kuser2: write_string(&v.kuser2),
+            kcmpnm: write_string(&v.kcmpnm),
+            knetwk: write_string(&v.knetwk),
+            kdatrd: write_string(&v.kdatrd),
+            kinst: write_string(&v.kinst),
         }
     }
 }
 
 impl SacHeader {
     pub(crate) fn from(v: &SacBinary) -> Self {
-        // bytes to string
-        let mut kt_vec: Vec<String> = v.kt.iter()
-            .map(|b|read_string(b))
-            .collect();
-
-        // fill with default value to 10
-        kt_vec.resize(10, "-12345  ".to_string());
-
-        // vec to array
-        let mut kt: [String; 10] = array::from_fn(|_| " ".to_string());
-        kt.clone_from_slice(&kt_vec);
-
         SacHeader {
-            kt,
             delta: v.delta,
             depmin: v.depmin,
             depmax: v.depmax,
@@ -345,6 +342,7 @@ impl SacHeader {
             khole: read_string(&v.khole),
             ko: read_string(&v.ko),
             ka: read_string(&v.ka),
+            kt: read_string_array(&v.kt),
             kf: read_string(&v.kf),
             kuser0: read_string(&v.kuser0),
             kuser1: read_string(&v.kuser1),
