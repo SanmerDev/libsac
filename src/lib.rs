@@ -101,7 +101,7 @@ impl SacHeader {
     }
 }
 
-impl Sac<'_> {
+impl Sac {
     pub(crate) fn read_all(p: &Path, e: Endian, only_h: bool) -> Result<Sac, Box<dyn Error>> {
         let mut f = File::open(p)?;
         let mut f_buf = Vec::new();
@@ -172,7 +172,7 @@ impl Sac<'_> {
     }
 
     pub fn write_header(&self) -> Result<(), Box<dyn Error>> {
-        self.write_all(self.path, self.endian, true)
+        self.write_all(self.path(), self.endian, true)
     }
 
     pub fn read(path: &Path, endian: Endian) -> Result<Sac, Box<dyn Error>> {
@@ -184,12 +184,10 @@ impl Sac<'_> {
     }
 
     pub fn write(&self) -> Result<(), Box<dyn Error>> {
-        self.write_all(self.path, self.endian, false)?;
-        Ok(())
+        self.write_all(self.path(), self.endian, false)
     }
 
     pub fn write_to(&self, path: &Path) -> Result<(), Box<dyn Error>> {
-        self.write_all(path, self.endian, false)?;
-        Ok(())
+        self.write_all(path, self.endian, false)
     }
 }
