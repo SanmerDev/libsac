@@ -12,11 +12,13 @@ use byteorder::{BigEndian as Big, ByteOrder, LittleEndian as Little};
 
 use crate::binary::SacBinary;
 use crate::enums::SacFileType;
+pub use crate::header::SacHeader;
 pub use crate::sac::Sac;
 
 mod binary;
 mod sac;
 mod enums;
+mod header;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Endian {
@@ -76,23 +78,30 @@ impl SacBinary {
     }
 }
 
-impl Sac<'_> {
+impl SacHeader {
     pub(crate) fn check(&self) -> Result<(), io::Error> {
         if self.nvhdr != SAC_HEADER_MAJOR_VERSION {
             let msg = format!("Unsupported Sac Header Version, {}", self.nvhdr);
-            let err= io::Error::new(io::ErrorKind::Unsupported, msg);
+            let err = io::Error::new(io::ErrorKind::Unsupported, msg);
             return Err(err)
         }
 
         if self.iftype == SacFileType::XYZ {
             let msg = format!("Unsupported Sac File Type: {}", self.iftype as i32);
-            let err= io::Error::new(io::ErrorKind::Unsupported, msg);
+            let err = io::Error::new(io::ErrorKind::Unsupported, msg);
             return Err(err)
         }
 
         Ok(())
     }
 
+    pub fn read(path: &Path, endian: Endian) -> Result<SacHeader, Box<dyn Error>> {
+        let sac = Sac::read_header(path, endian)?;
+        Ok(sac.h)
+    }
+}
+
+impl Sac<'_> {
     pub(crate) fn read_all(p: &Path, e: Endian, only_h: bool) -> Result<Sac, Box<dyn Error>> {
         let mut f = File::open(p)?;
         let mut f_buf = Vec::new();

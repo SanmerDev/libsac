@@ -1,10 +1,8 @@
 use std::array;
-use std::path::Path;
 
 use bincode::{Decode, Encode};
-use crate::Endian;
 
-use crate::sac::Sac;
+use crate::header::SacHeader;
 
 const SAC_INT_UNDEF : i32 = -12345;
 const SAC_BOOL_UNDEF : i32 = 0;
@@ -161,7 +159,7 @@ impl Default for SacBinary {
 }
 
 impl SacBinary {
-    pub fn from(v: &Sac) -> Self {
+    pub fn from(v: &SacHeader) -> Self {
         // string to bytes
         let mut kt_vec: Vec<[u8; 8]> = v.kt.iter()
             .map(|s|write_string(s, 8))
@@ -265,8 +263,8 @@ impl SacBinary {
     }
 }
 
-impl <'a> Sac<'a> {
-    pub(crate) fn build(v: &SacBinary, p: &'a Path, e: Endian) -> Self {
+impl SacHeader {
+    pub(crate) fn from(v: &SacBinary) -> Self {
         // bytes to string
         let mut kt_vec: Vec<String> = v.kt.iter()
             .map(|b|read_string(b))
@@ -279,14 +277,8 @@ impl <'a> Sac<'a> {
         let mut kt: [String; 10] = array::from_fn(|_| " ".to_string());
         kt.clone_from_slice(&kt_vec);
 
-        Sac {
-            // inner
-            path: p,
-            endian: e,
-
+        SacHeader {
             kt,
-            x: Vec::with_capacity(0),
-            y: Vec::with_capacity(0),
             delta: v.delta,
             depmin: v.depmin,
             depmax: v.depmax,
