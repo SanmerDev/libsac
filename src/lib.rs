@@ -69,7 +69,7 @@ impl SacBinary {
         };
 
         val.iter()
-            .flat_map(|v| {
+            .flat_map(|v|{
                 let mut byte = [0; 4];
                 write_f32(&mut byte, *v);
                 byte
@@ -165,6 +165,10 @@ impl Sac<'_> {
 
     pub fn read_header(path: &Path, endian: Endian) -> Result<Sac, Box<dyn Error>> {
         Sac::read_all(path, endian, true)
+    }
+
+    pub fn set_header(&mut self, h: SacHeader) {
+        self.h = h
     }
 
     pub fn write_header(&self) -> Result<(), Box<dyn Error>> {
