@@ -5,9 +5,9 @@ use std::io::{Read, Write};
 use std::mem::size_of;
 use std::path::Path;
 
-use bincode::{decode_from_slice, encode_into_slice};
 use bincode::config::{BigEndian, Configuration, Fixint, LittleEndian};
 use bincode::error::{DecodeError, EncodeError};
+use bincode::{decode_from_slice, encode_into_slice};
 use byteorder::{BigEndian as Big, ByteOrder, LittleEndian as Little};
 
 use crate::binary::SacBinary;
@@ -16,9 +16,9 @@ pub use crate::header::SacHeader;
 pub use crate::sac::Sac;
 
 mod binary;
-mod sac;
 mod enums;
 mod header;
+mod sac;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Endian {
@@ -26,13 +26,15 @@ pub enum Endian {
     Big,
 }
 
-const SAC_HEADER_SIZE : usize = size_of::<SacBinary>();
+const SAC_HEADER_SIZE: usize = size_of::<SacBinary>();
 const SAC_HEADER_MAJOR_VERSION: i32 = 6;
 
-const LITTLE_ENDIAN_CONFIG: Configuration<LittleEndian, Fixint> =
-    bincode::config::standard().with_little_endian().with_fixed_int_encoding();
-const BIG_ENDIAN_CONFIG: Configuration<BigEndian, Fixint> =
-    bincode::config::standard().with_big_endian().with_fixed_int_encoding();
+const LITTLE_ENDIAN_CONFIG: Configuration<LittleEndian, Fixint> = bincode::config::standard()
+    .with_little_endian()
+    .with_fixed_int_encoding();
+const BIG_ENDIAN_CONFIG: Configuration<BigEndian, Fixint> = bincode::config::standard()
+    .with_big_endian()
+    .with_fixed_int_encoding();
 
 impl SacBinary {
     fn decode_header(src: &[u8], endian: Endian) -> Result<SacBinary, DecodeError> {
@@ -57,9 +59,7 @@ impl SacBinary {
             Endian::Big => Big::read_f32,
         };
 
-        src.chunks(4)
-            .map(|b|read_f32(b))
-            .collect()
+        src.chunks(4).map(|b| read_f32(b)).collect()
     }
 
     fn encode_data(val: &Vec<f32>, endian: Endian) -> Vec<u8> {
@@ -69,7 +69,7 @@ impl SacBinary {
         };
 
         val.iter()
-            .flat_map(|v|{
+            .flat_map(|v| {
                 let mut byte = [0; 4];
                 write_f32(&mut byte, *v);
                 byte
@@ -83,13 +83,13 @@ impl SacHeader {
         if self.nvhdr != SAC_HEADER_MAJOR_VERSION {
             let msg = format!("Unsupported Sac Header Version, {}", self.nvhdr);
             let err = io::Error::new(io::ErrorKind::Unsupported, msg);
-            return Err(err)
+            return Err(err);
         }
 
         if self.iftype == SacFileType::XYZ {
             let msg = format!("Unsupported Sac File Type: {}", self.iftype as i32);
             let err = io::Error::new(io::ErrorKind::Unsupported, msg);
-            return Err(err)
+            return Err(err);
         }
 
         Ok(())
@@ -114,7 +114,7 @@ impl Sac {
         let mut sac = Sac::build(&binary, p, e);
 
         if only_h {
-            return Ok(sac)
+            return Ok(sac);
         }
 
         if let Err(err) = sac.check() {
@@ -125,7 +125,7 @@ impl Sac {
 
         if sac.iftype == SacFileType::Time && sac.leven {
             sac.y = data;
-            return Ok(sac)
+            return Ok(sac);
         }
 
         let size = sac.npts as usize;
@@ -134,7 +134,12 @@ impl Sac {
         Ok(sac)
     }
 
-    pub(crate) fn write_all(&self, p: &Path, e: Endian, only_h: bool) -> Result<(), Box<dyn Error>> {
+    pub(crate) fn write_all(
+        &self,
+        p: &Path,
+        e: Endian,
+        only_h: bool,
+    ) -> Result<(), Box<dyn Error>> {
         if let Err(err) = self.check() {
             return Err(Box::new(err));
         }
@@ -148,7 +153,6 @@ impl Sac {
             let mut f_buf = Vec::new();
             f.read_to_end(&mut f_buf)?;
             f_buf[SAC_HEADER_SIZE..].to_vec()
-
         } else {
             let mut data = self.x.clone();
             data.extend_from_slice(&self.y);

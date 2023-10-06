@@ -2,8 +2,8 @@ use std::ops::{Deref, DerefMut};
 use std::path::Path;
 
 use crate::binary::SacBinary;
-use crate::Endian;
 use crate::header::SacHeader;
+use crate::Endian;
 
 #[derive(Debug, Clone)]
 pub struct Sac {
@@ -36,8 +36,7 @@ impl Sac {
 
     pub(crate) fn build(b: &SacBinary, p: &Path, e: Endian) -> Self {
         let p = p.canonicalize().unwrap();
-        let p = p.to_str().unwrap()
-            .to_string();
+        let p = p.to_str().unwrap().to_string();
 
         Sac {
             path: p,
@@ -45,7 +44,7 @@ impl Sac {
 
             h: SacHeader::from(b),
             x: Vec::with_capacity(0),
-            y: Vec::with_capacity(0)
+            y: Vec::with_capacity(0),
         }
     }
 

@@ -4,16 +4,12 @@ use bincode::{Decode, Encode};
 
 use crate::header::SacHeader;
 
-const SAC_INT_UNDEF : i32 = -12345;
-const SAC_BOOL_UNDEF : i32 = 0;
-const SAC_FLOAT_UNDEF : f32 = -12345.0;
-const SAC_STR8_UNDEF: [u8; 8] = [
-    b'-', b'1', b'2', b'3', b'4', b'5',
-    b' ', b' '
-];
+const SAC_INT_UNDEF: i32 = -12345;
+const SAC_BOOL_UNDEF: i32 = 0;
+const SAC_FLOAT_UNDEF: f32 = -12345.0;
+const SAC_STR8_UNDEF: [u8; 8] = [b'-', b'1', b'2', b'3', b'4', b'5', b' ', b' '];
 const SAC_STR16_UNDEF: [u8; 16] = [
-    b'-', b'1', b'2', b'3', b'4', b'5',
-    b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' '
+    b'-', b'1', b'2', b'3', b'4', b'5', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ',
 ];
 
 fn write_string<const N: usize>(v: &String) -> [u8; N] {
@@ -27,9 +23,7 @@ fn write_string<const N: usize>(v: &String) -> [u8; N] {
 }
 
 fn write_string_array<const M: usize, const N: usize>(v: &[String; N]) -> [[u8; M]; N] {
-    let values: Vec<[u8; M]> = v.iter()
-        .map(|s|write_string(s))
-        .collect();
+    let values: Vec<[u8; M]> = v.iter().map(|s| write_string(s)).collect();
 
     let mut array = [[b' '; M]; N];
     array.copy_from_slice(&values);
@@ -45,11 +39,9 @@ fn read_string<const N: usize>(v: &[u8; N]) -> String {
 }
 
 fn read_string_array<const M: usize, const N: usize>(v: &[[u8; M]; N]) -> [String; N] {
-    let values: Vec<String> = v.iter()
-        .map(|b|read_string(b))
-        .collect();
+    let values: Vec<String> = v.iter().map(|b| read_string(b)).collect();
 
-    let mut array: [String; N] = array::from_fn(|_|String::new());
+    let mut array: [String; N] = array::from_fn(|_| String::new());
     array.clone_from_slice(&values);
 
     array
@@ -59,34 +51,98 @@ fn read_string_array<const M: usize, const N: usize>(v: &[[u8; M]; N]) -> [Strin
 #[derive(Debug, Encode, Decode)]
 pub struct SacBinary {
     // float
-    delta: f32, depmin: f32, depmax: f32, scale: f32, odelta: f32,
-    b: f32, e: f32, o: f32, a: f32, internal1: f32,
-    t: [f32; 10], f: f32,
-    resp: [f32; 10], stla: f32, stlo: f32, stel: f32, stdp: f32,
-    evla: f32, evlo: f32, evel: f32, evdp: f32, mag: f32,
+    delta: f32,
+    depmin: f32,
+    depmax: f32,
+    scale: f32,
+    odelta: f32,
+    b: f32,
+    e: f32,
+    o: f32,
+    a: f32,
+    internal1: f32,
+    t: [f32; 10],
+    f: f32,
+    resp: [f32; 10],
+    stla: f32,
+    stlo: f32,
+    stel: f32,
+    stdp: f32,
+    evla: f32,
+    evlo: f32,
+    evel: f32,
+    evdp: f32,
+    mag: f32,
     user: [f32; 10],
-    dist: f32, az: f32, baz: f32, gcarc: f32, internal2: f32,
-    internal3: f32, depmen: f32, cmpaz: f32, cmpinc: f32, xminimum: f32,
-    xmaximum: f32, yminimum: f32, ymaximum: f32, unused0: [f32; 7],
+    dist: f32,
+    az: f32,
+    baz: f32,
+    gcarc: f32,
+    internal2: f32,
+    internal3: f32,
+    depmen: f32,
+    cmpaz: f32,
+    cmpinc: f32,
+    xminimum: f32,
+    xmaximum: f32,
+    yminimum: f32,
+    ymaximum: f32,
+    unused0: [f32; 7],
 
     // int
-    nzyear: i32, nzjday: i32, nzhour: i32, nzmin: i32, nzsec: i32,
-    nzmsec: i32, nvhdr: i32, norid: i32, nevid: i32, npts: i32,
-    internal4: i32, nwfid: i32, nxsize: i32, nysize: i32, unused1: i32,
+    nzyear: i32,
+    nzjday: i32,
+    nzhour: i32,
+    nzmin: i32,
+    nzsec: i32,
+    nzmsec: i32,
+    nvhdr: i32,
+    norid: i32,
+    nevid: i32,
+    npts: i32,
+    internal4: i32,
+    nwfid: i32,
+    nxsize: i32,
+    nysize: i32,
+    unused1: i32,
 
     // enum
-    iftype: i32, idep: i32, iztype: i32, unused2: i32, iinst: i32,
-    istreg: i32, ievreg: i32, ievtyp: i32, iqual: i32, isynth: i32,
-    imagtyp: i32, imagsrc: i32, unused3: [i32; 8],
+    iftype: i32,
+    idep: i32,
+    iztype: i32,
+    unused2: i32,
+    iinst: i32,
+    istreg: i32,
+    ievreg: i32,
+    ievtyp: i32,
+    iqual: i32,
+    isynth: i32,
+    imagtyp: i32,
+    imagsrc: i32,
+    unused3: [i32; 8],
 
     // bool
-    leven: i32, lpspol: i32, lovrok: i32, lcalda: i32, unused4: i32,
+    leven: i32,
+    lpspol: i32,
+    lovrok: i32,
+    lcalda: i32,
+    unused4: i32,
 
     // string
-    kstnm: [u8; 8], kevnm: [u8; 16], khole: [u8; 8], ko: [u8; 8], ka: [u8; 8],
-    kt: [[u8; 8]; 10], kf: [u8; 8],
-    kuser0: [u8; 8], kuser1: [u8; 8], kuser2: [u8; 8],
-    kcmpnm: [u8; 8], knetwk: [u8; 8], kdatrd: [u8; 8], kinst: [u8; 8]
+    kstnm: [u8; 8],
+    kevnm: [u8; 16],
+    khole: [u8; 8],
+    ko: [u8; 8],
+    ka: [u8; 8],
+    kt: [[u8; 8]; 10],
+    kf: [u8; 8],
+    kuser0: [u8; 8],
+    kuser1: [u8; 8],
+    kuser2: [u8; 8],
+    kcmpnm: [u8; 8],
+    knetwk: [u8; 8],
+    kdatrd: [u8; 8],
+    kinst: [u8; 8],
 }
 
 impl Default for SacBinary {
