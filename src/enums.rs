@@ -14,7 +14,7 @@ pub enum SacFileType {
     AmpPhase = IAMPH,
     XY = IXY,
     XYZ = IXYZ,
-    Unknown = SAC_INT_UNDEF
+    Unknown = SAC_INT_UNDEF,
 }
 
 impl From<SacFileType> for i32 {

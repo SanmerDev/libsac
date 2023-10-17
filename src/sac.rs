@@ -30,10 +30,6 @@ impl DerefMut for Sac {
 }
 
 impl Sac {
-    pub(crate) fn path(&self) -> &Path {
-        Path::new(&self.path)
-    }
-
     pub(crate) fn build(b: &SacBinary, p: &Path, e: Endian) -> Self {
         let p = p.canonicalize().unwrap();
         let p = p.to_str().unwrap().to_string();
@@ -41,8 +37,8 @@ impl Sac {
         Sac {
             path: p,
             endian: e,
-
             h: SacHeader::from(b),
+
             x: Vec::with_capacity(0),
             y: Vec::with_capacity(0),
         }

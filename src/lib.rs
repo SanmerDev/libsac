@@ -92,7 +92,7 @@ impl SacHeader {
                 let err = io::Error::new(io::ErrorKind::Unsupported, msg);
                 Err(err)
             }
-            _ => Ok(())
+            _ => Ok(()),
         }
     }
 
@@ -177,7 +177,8 @@ impl Sac {
     }
 
     pub fn write_header(&self) -> Result<(), Box<dyn Error>> {
-        self.write_out(self.path(), self.endian, true)
+        let path = Path::new(&self.path);
+        self.write_out(path, self.endian, true)
     }
 
     pub fn read(path: &Path, endian: Endian) -> Result<Sac, Box<dyn Error>> {
@@ -189,7 +190,8 @@ impl Sac {
     }
 
     pub fn write(&self) -> Result<(), Box<dyn Error>> {
-        self.write_out(self.path(), self.endian, false)
+        let path = Path::new(&self.path);
+        self.write_out(path, self.endian, false)
     }
 
     pub fn write_to(&self, path: &Path) -> Result<(), Box<dyn Error>> {
