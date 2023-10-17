@@ -79,20 +79,21 @@ impl SacBinary {
 }
 
 impl SacHeader {
-    pub(crate) fn check(&self) -> Result<(), io::Error> {
+    pub(crate) fn check_header(&self) -> Result<(), io::Error> {
         if self.nvhdr != SAC_HEADER_MAJOR_VERSION {
             let msg = format!("Unsupported Sac Header Version, {}", self.nvhdr);
             let err = io::Error::new(io::ErrorKind::Unsupported, msg);
             return Err(err);
         }
 
-        if self.iftype == SacFileType::XYZ {
-            let msg = format!("Unsupported Sac File Type: {}", self.iftype as i32);
-            let err = io::Error::new(io::ErrorKind::Unsupported, msg);
-            return Err(err);
+        match self.iftype {
+            SacFileType::XYZ | SacFileType::Unknown => {
+                let msg = format!("Unsupported Sac File Type: {:?}", self.iftype);
+                let err = io::Error::new(io::ErrorKind::Unsupported, msg);
+                Err(err)
+            }
+            _ => Ok(())
         }
-
-        Ok(())
     }
 
     pub fn read(path: &Path, endian: Endian) -> Result<SacHeader, Box<dyn Error>> {
@@ -102,7 +103,7 @@ impl SacHeader {
 }
 
 impl Sac {
-    pub(crate) fn read_all(p: &Path, e: Endian, only_h: bool) -> Result<Sac, Box<dyn Error>> {
+    pub(crate) fn read_in(p: &Path, e: Endian, only_h: bool) -> Result<Sac, Box<dyn Error>> {
         let mut f = File::open(p)?;
         let mut f_buf = Vec::new();
         f.read_to_end(&mut f_buf)?;
@@ -113,12 +114,12 @@ impl Sac {
         let binary = SacBinary::decode_header(h_buf, e)?;
         let mut sac = Sac::build(&binary, p, e);
 
-        if only_h {
-            return Ok(sac);
+        if let Err(err) = sac.check_header() {
+            return Err(Box::new(err));
         }
 
-        if let Err(err) = sac.check() {
-            return Err(Box::new(err));
+        if only_h {
+            return Ok(sac);
         }
 
         let data = SacBinary::decode_data(d_buf, e);
@@ -134,13 +135,13 @@ impl Sac {
         Ok(sac)
     }
 
-    pub(crate) fn write_all(
+    pub(crate) fn write_out(
         &self,
         p: &Path,
         e: Endian,
         only_h: bool,
     ) -> Result<(), Box<dyn Error>> {
-        if let Err(err) = self.check() {
+        if let Err(err) = self.check_header() {
             return Err(Box::new(err));
         }
 
@@ -168,7 +169,7 @@ impl Sac {
     }
 
     pub fn read_header(path: &Path, endian: Endian) -> Result<Sac, Box<dyn Error>> {
-        Sac::read_all(path, endian, true)
+        Sac::read_in(path, endian, true)
     }
 
     pub fn set_header(&mut self, h: SacHeader) {
@@ -176,11 +177,11 @@ impl Sac {
     }
 
     pub fn write_header(&self) -> Result<(), Box<dyn Error>> {
-        self.write_all(self.path(), self.endian, true)
+        self.write_out(self.path(), self.endian, true)
     }
 
     pub fn read(path: &Path, endian: Endian) -> Result<Sac, Box<dyn Error>> {
-        Sac::read_all(path, endian, false)
+        Sac::read_in(path, endian, false)
     }
 
     pub fn set_endian(&mut self, endian: Endian) {
@@ -188,10 +189,10 @@ impl Sac {
     }
 
     pub fn write(&self) -> Result<(), Box<dyn Error>> {
-        self.write_all(self.path(), self.endian, false)
+        self.write_out(self.path(), self.endian, false)
     }
 
     pub fn write_to(&self, path: &Path) -> Result<(), Box<dyn Error>> {
-        self.write_all(path, self.endian, false)
+        self.write_out(path, self.endian, false)
     }
 }
