@@ -4,11 +4,11 @@ use bincode::{Decode, Encode};
 
 use crate::header::SacHeader;
 
-const SAC_INT_UNDEF: i32 = -12345;
-const SAC_BOOL_UNDEF: i32 = 0;
-const SAC_FLOAT_UNDEF: f32 = -12345.0;
-const SAC_STR8_UNDEF: [u8; 8] = [b'-', b'1', b'2', b'3', b'4', b'5', b' ', b' '];
-const SAC_STR16_UNDEF: [u8; 16] = [
+pub(crate) const SAC_INT_UNDEF: i32 = -12345;
+pub(crate) const SAC_BOOL_UNDEF: i32 = 0;
+pub(crate) const SAC_FLOAT_UNDEF: f32 = -12345.0;
+pub(crate) const SAC_STR8_UNDEF: [u8; 8] = [b'-', b'1', b'2', b'3', b'4', b'5', b' ', b' '];
+pub(crate) const SAC_STR16_UNDEF: [u8; 16] = [
     b'-', b'1', b'2', b'3', b'4', b'5', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ',
 ];
 

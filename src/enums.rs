@@ -1,3 +1,5 @@
+use crate::binary::SAC_INT_UNDEF;
+
 const ITIME: i32 = 1;
 const IRLIM: i32 = 2;
 const IAMPH: i32 = 3;
@@ -12,6 +14,7 @@ pub enum SacFileType {
     AmpPhase = IAMPH,
     XY = IXY,
     XYZ = IXYZ,
+    Unknown = SAC_INT_UNDEF
 }
 
 impl From<SacFileType> for i32 {
@@ -28,7 +31,7 @@ impl From<i32> for SacFileType {
             IAMPH => SacFileType::AmpPhase,
             IXY => SacFileType::XY,
             IXYZ => SacFileType::XYZ,
-            _ => panic!("Unknown Sac File Type: {}", t),
+            _ => SacFileType::Unknown,
         }
     }
 }
