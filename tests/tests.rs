@@ -3,7 +3,7 @@ mod tests {
     use std::fs;
     use std::path::Path;
 
-    use libsac::{Endian, Sac};
+    use libsac::{Endian, Sac, SacFileType};
 
     #[test]
     fn test_read() {
@@ -87,12 +87,11 @@ mod tests {
     #[test]
     fn test_new() {
         let new = Path::new("tests/test_new.sac");
-        let sac = Sac::new(new, Endian::Little);
-        unsafe {
-            sac.write_unchecked().unwrap();
-        }
+        let mut sac = Sac::new(new, Endian::Little);
+        sac.iftype = SacFileType::XY;
+        sac.write().unwrap();
 
-        let sac = unsafe { Sac::read_unchecked(new, Endian::Little) }.unwrap();
+        let sac = Sac::read(new, Endian::Little).unwrap();
         let y = &sac.y;
 
         assert_eq!(sac.delta, -12345.0);

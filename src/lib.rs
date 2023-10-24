@@ -101,7 +101,7 @@ impl SacHeader {
 }
 
 impl Sac {
-    pub(crate) fn read_in_unchecked(p: &Path, e: Endian, only_h: bool) -> Result<Sac, SacError> {
+    pub(crate) fn read_in(p: &Path, e: Endian, only_h: bool) -> Result<Sac, SacError> {
         let mut f = match File::open(p) {
             Ok(f) => f,
             Err(e) => return Err(SacError::IO(e.to_string())),
@@ -122,6 +122,8 @@ impl Sac {
         };
 
         let mut sac = Sac::build(&binary, p, e);
+        sac.check_header()?;
+
         if only_h {
             return Ok(sac);
         }
@@ -138,12 +140,8 @@ impl Sac {
         Ok(sac)
     }
 
-    pub(crate) fn write_out_unchecked(
-        &self,
-        p: &Path,
-        e: Endian,
-        only_h: bool,
-    ) -> Result<(), SacError> {
+    pub(crate) fn write_out(&self, p: &Path, e: Endian, only_h: bool) -> Result<(), SacError> {
+        self.check_header()?;
         let header = SacBinary::from(self);
         let mut h_buf = [0; SAC_HEADER_SIZE];
 
@@ -188,37 +186,6 @@ impl Sac {
         Ok(())
     }
 
-    pub fn read_header_unchecked(path: &Path, endian: Endian) -> Result<Sac, SacError> {
-        Sac::read_in_unchecked(path, endian, true)
-    }
-
-    pub fn write_header_unchecked(&self) -> Result<(), SacError> {
-        let path = Path::new(&self.path);
-        self.write_out_unchecked(path, self.endian, true)
-    }
-
-    /**
-    [SacFileType::XYZ] is not supported
-     */
-    pub unsafe fn read_unchecked(path: &Path, endian: Endian) -> Result<Sac, SacError> {
-        Sac::read_in_unchecked(path, endian, false)
-    }
-
-    /**
-    [SacFileType::XYZ] is not supported
-    */
-    pub unsafe fn write_unchecked(&self) -> Result<(), SacError> {
-        let path = Path::new(&self.path);
-        self.write_out_unchecked(path, self.endian, false)
-    }
-
-    /**
-    [SacFileType::XYZ] is not supported
-    */
-    pub unsafe fn write_to_unchecked(&self, path: &Path) -> Result<(), SacError> {
-        self.write_out_unchecked(path, self.endian, false)
-    }
-
     pub fn set_header(&mut self, h: SacHeader) {
         self.h = h
     }
@@ -228,31 +195,24 @@ impl Sac {
     }
 
     pub fn read_header(path: &Path, endian: Endian) -> Result<Sac, SacError> {
-        let sac = Sac::read_in_unchecked(path, endian, true)?;
-        sac.check_header()?;
-        Ok(sac)
+        Sac::read_in(path, endian, true)
     }
 
     pub fn write_header(&self) -> Result<(), SacError> {
-        self.check_header()?;
         let path = Path::new(&self.path);
-        self.write_out_unchecked(path, self.endian, true)
+        self.write_out(path, self.endian, true)
     }
 
     pub fn read(path: &Path, endian: Endian) -> Result<Sac, SacError> {
-        let sac = Sac::read_in_unchecked(path, endian, false)?;
-        sac.check_header()?;
-        Ok(sac)
+        Sac::read_in(path, endian, false)
     }
 
     pub fn write(&self) -> Result<(), SacError> {
-        self.check_header()?;
         let path = Path::new(&self.path);
-        self.write_out_unchecked(path, self.endian, false)
+        self.write_out(path, self.endian, false)
     }
 
     pub fn write_to(&self, path: &Path) -> Result<(), SacError> {
-        self.check_header()?;
-        self.write_out_unchecked(path, self.endian, false)
+        self.write_out(path, self.endian, false)
     }
 }
