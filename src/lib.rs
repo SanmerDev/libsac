@@ -1,17 +1,16 @@
-use std::error::Error;
 use std::fs::File;
-use std::io;
 use std::io::{Read, Write};
 use std::mem::size_of;
 use std::path::Path;
 
+use bincode::{decode_from_slice, encode_into_slice};
 use bincode::config::{BigEndian, Configuration, Fixint, LittleEndian};
 use bincode::error::{DecodeError, EncodeError};
-use bincode::{decode_from_slice, encode_into_slice};
 use byteorder::{BigEndian as Big, ByteOrder, LittleEndian as Little};
 
 use crate::binary::SacBinary;
-use crate::enums::SacFileType;
+pub use crate::enums::SacFileType;
+pub use crate::error::SacError;
 pub use crate::header::SacHeader;
 pub use crate::sac::Sac;
 
@@ -19,6 +18,7 @@ mod binary;
 mod enums;
 mod header;
 mod sac;
+mod error;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Endian {
@@ -79,51 +79,54 @@ impl SacBinary {
 }
 
 impl SacHeader {
-    pub(crate) fn check_header(&self) -> Result<(), io::Error> {
+    pub(crate) fn check_header(&self) -> Result<(), SacError> {
         if self.nvhdr != SAC_HEADER_MAJOR_VERSION {
-            let msg = format!("Unsupported Sac Header Version, {}", self.nvhdr);
-            let err = io::Error::new(io::ErrorKind::Unsupported, msg);
-            return Err(err);
+            let msg = format!("Sac Header Version: {}", self.nvhdr);
+            return Err(SacError::Unsupported(msg));
         }
 
         match self.iftype {
             SacFileType::XYZ | SacFileType::Unknown => {
-                let msg = format!("Unsupported Sac File Type: {:?}", self.iftype);
-                let err = io::Error::new(io::ErrorKind::Unsupported, msg);
-                Err(err)
+                let msg = format!("Sac File Type: {:?}", self.iftype);
+                Err(SacError::Unsupported(msg))
             }
             _ => Ok(()),
         }
     }
 
-    pub fn read(path: &Path, endian: Endian) -> Result<SacHeader, Box<dyn Error>> {
+    pub fn read(path: &Path, endian: Endian) -> Result<SacHeader, SacError> {
         let sac = Sac::read_header(path, endian)?;
         Ok(sac.h)
     }
 }
 
 impl Sac {
-    pub(crate) fn read_in(p: &Path, e: Endian, only_h: bool) -> Result<Sac, Box<dyn Error>> {
-        let mut f = File::open(p)?;
+    pub(crate) fn read_in_unchecked(p: &Path, e: Endian, only_h: bool) -> Result<Sac, SacError> {
+        let mut f = match File::open(p) {
+            Ok(f) => f,
+            Err(e) => return Err(SacError::IO(e.to_string()))
+        };
+
         let mut f_buf = Vec::new();
-        f.read_to_end(&mut f_buf)?;
+        match f.read_to_end(&mut f_buf) {
+            Ok(v) => v,
+            Err(e) => return Err(SacError::IO(e.to_string()))
+        };
 
         let h_buf = &f_buf[..SAC_HEADER_SIZE];
         let d_buf = &f_buf[SAC_HEADER_SIZE..];
 
-        let binary = SacBinary::decode_header(h_buf, e)?;
+        let binary = match SacBinary::decode_header(h_buf, e) {
+            Ok(b) => b,
+            Err(e) => return Err(SacError::Unsupported(e.to_string()))
+        };
+
         let mut sac = Sac::build(&binary, p, e);
-
-        if let Err(err) = sac.check_header() {
-            return Err(Box::new(err));
-        }
-
         if only_h {
             return Ok(sac);
         }
 
         let data = SacBinary::decode_data(d_buf, e);
-
         if sac.iftype == SacFileType::Time && sac.leven {
             sac.y = data;
             return Ok(sac);
@@ -135,66 +138,116 @@ impl Sac {
         Ok(sac)
     }
 
-    pub(crate) fn write_out(
-        &self,
-        p: &Path,
-        e: Endian,
-        only_h: bool,
-    ) -> Result<(), Box<dyn Error>> {
-        if let Err(err) = self.check_header() {
-            return Err(Box::new(err));
-        }
-
+    pub(crate) fn write_out_unchecked(&self, p: &Path, e: Endian, only_h: bool) -> Result<(), SacError> {
         let header = SacBinary::from(self);
         let mut h_buf = [0; SAC_HEADER_SIZE];
-        SacBinary::encode_header(header, &mut h_buf, e)?;
+
+        match SacBinary::encode_header(header, &mut h_buf, e) {
+            Ok(v) => v,
+            Err(e) => return Err(SacError::Unsupported(e.to_string()))
+        };
 
         let d_buf = if only_h {
-            let mut f = File::open(p)?;
+            let mut f = match File::open(p) {
+                Ok(f) => f,
+                Err(e) => return Err(SacError::IO(e.to_string()))
+            };
+
             let mut f_buf = Vec::new();
-            f.read_to_end(&mut f_buf)?;
+            match f.read_to_end(&mut f_buf) {
+                Ok(v) => v,
+                Err(e) => return Err(SacError::IO(e.to_string()))
+            };
+
             f_buf[SAC_HEADER_SIZE..].to_vec()
         } else {
             let mut data = self.x.clone();
             data.extend_from_slice(&self.y);
+
             SacBinary::encode_data(&data, e)
         };
 
         let mut f_buf = h_buf.to_vec();
         f_buf.extend_from_slice(&d_buf);
 
-        let mut f = File::create(p)?;
-        f.write_all(&f_buf)?;
+        let mut f = match File::create(p) {
+            Ok(v) => v,
+            Err(e) => return Err(SacError::IO(e.to_string()))
+        };
+
+        match f.write_all(&f_buf) {
+            Ok(v) => v,
+            Err(e) => return Err(SacError::IO(e.to_string()))
+        };
+
         Ok(())
     }
 
-    pub fn read_header(path: &Path, endian: Endian) -> Result<Sac, Box<dyn Error>> {
-        Sac::read_in(path, endian, true)
+    pub fn read_header_unchecked(path: &Path, endian: Endian) -> Result<Sac, SacError> {
+        Sac::read_in_unchecked(path, endian, true)
+    }
+
+    pub fn write_header_unchecked(&self) -> Result<(), SacError> {
+        let path = Path::new(&self.path);
+        self.write_out_unchecked(path, self.endian, true)
+    }
+
+    /**
+    [SacFileType::XYZ] is not supported
+     */
+    pub unsafe fn read_unchecked(path: &Path, endian: Endian) -> Result<Sac, SacError> {
+        Sac::read_in_unchecked(path, endian, false)
+    }
+
+    /**
+     [SacFileType::XYZ] is not supported
+     */
+    pub unsafe fn write_unchecked(&self) -> Result<(), SacError> {
+        let path = Path::new(&self.path);
+        self.write_out_unchecked(path, self.endian, false)
+    }
+
+    /**
+     [SacFileType::XYZ] is not supported
+     */
+    pub unsafe fn write_to_unchecked(&self, path: &Path) -> Result<(), SacError> {
+        self.write_out_unchecked(path, self.endian, false)
     }
 
     pub fn set_header(&mut self, h: SacHeader) {
         self.h = h
     }
 
-    pub fn write_header(&self) -> Result<(), Box<dyn Error>> {
-        let path = Path::new(&self.path);
-        self.write_out(path, self.endian, true)
-    }
-
-    pub fn read(path: &Path, endian: Endian) -> Result<Sac, Box<dyn Error>> {
-        Sac::read_in(path, endian, false)
-    }
-
     pub fn set_endian(&mut self, endian: Endian) {
         self.endian = endian
     }
 
-    pub fn write(&self) -> Result<(), Box<dyn Error>> {
-        let path = Path::new(&self.path);
-        self.write_out(path, self.endian, false)
+    pub fn read_header(path: &Path, endian: Endian) -> Result<Sac, SacError> {
+        let sac = Sac::read_in_unchecked(path, endian, true)?;
+        sac.check_header()?;
+        Ok(sac)
     }
 
-    pub fn write_to(&self, path: &Path) -> Result<(), Box<dyn Error>> {
-        self.write_out(path, self.endian, false)
+    pub fn write_header(&self) -> Result<(), SacError> {
+        self.check_header()?;
+        let path = Path::new(&self.path);
+        self.write_out_unchecked(path, self.endian, true)
+    }
+
+    pub fn read(path: &Path, endian: Endian) -> Result<Sac, SacError> {
+        let sac = Sac::read_in_unchecked(path, endian, false)?;
+        sac.check_header()?;
+        Ok(sac)
+    }
+
+    pub fn write(&self) -> Result<(), SacError> {
+        self.check_header()?;
+        let path = Path::new(&self.path);
+        self.write_out_unchecked(path, self.endian, false)
+    }
+
+    pub fn write_to(&self, path: &Path) -> Result<(), SacError> {
+        self.check_header()?;
+        self.write_out_unchecked(path, self.endian, false)
     }
 }
