@@ -43,7 +43,7 @@ impl Sac {
         }
     }
 
-    pub fn new_empty(path: &Path, endian: Endian) -> Self {
+    pub fn new(path: &Path, endian: Endian) -> Self {
         Sac::build(&SacBinary::default(), path, endian)
     }
 }
