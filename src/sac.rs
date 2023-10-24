@@ -31,8 +31,7 @@ impl DerefMut for Sac {
 
 impl Sac {
     pub(crate) fn build(b: &SacBinary, p: &Path, e: Endian) -> Self {
-        let p = p.canonicalize().unwrap();
-        let p = p.to_str().unwrap().to_string();
+        let p = p.to_str().unwrap_or("tmp.sac").to_string();
 
         Sac {
             path: p,
