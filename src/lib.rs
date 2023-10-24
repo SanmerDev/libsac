@@ -3,9 +3,9 @@ use std::io::{Read, Write};
 use std::mem::size_of;
 use std::path::Path;
 
-use bincode::{decode_from_slice, encode_into_slice};
 use bincode::config::{BigEndian, Configuration, Fixint, LittleEndian};
 use bincode::error::{DecodeError, EncodeError};
+use bincode::{decode_from_slice, encode_into_slice};
 use byteorder::{BigEndian as Big, ByteOrder, LittleEndian as Little};
 
 use crate::binary::SacBinary;
@@ -16,9 +16,9 @@ pub use crate::sac::Sac;
 
 mod binary;
 mod enums;
+mod error;
 mod header;
 mod sac;
-mod error;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Endian {
@@ -104,13 +104,13 @@ impl Sac {
     pub(crate) fn read_in_unchecked(p: &Path, e: Endian, only_h: bool) -> Result<Sac, SacError> {
         let mut f = match File::open(p) {
             Ok(f) => f,
-            Err(e) => return Err(SacError::IO(e.to_string()))
+            Err(e) => return Err(SacError::IO(e.to_string())),
         };
 
         let mut f_buf = Vec::new();
         match f.read_to_end(&mut f_buf) {
             Ok(v) => v,
-            Err(e) => return Err(SacError::IO(e.to_string()))
+            Err(e) => return Err(SacError::IO(e.to_string())),
         };
 
         let h_buf = &f_buf[..SAC_HEADER_SIZE];
@@ -118,7 +118,7 @@ impl Sac {
 
         let binary = match SacBinary::decode_header(h_buf, e) {
             Ok(b) => b,
-            Err(e) => return Err(SacError::Unsupported(e.to_string()))
+            Err(e) => return Err(SacError::Unsupported(e.to_string())),
         };
 
         let mut sac = Sac::build(&binary, p, e);
@@ -138,25 +138,30 @@ impl Sac {
         Ok(sac)
     }
 
-    pub(crate) fn write_out_unchecked(&self, p: &Path, e: Endian, only_h: bool) -> Result<(), SacError> {
+    pub(crate) fn write_out_unchecked(
+        &self,
+        p: &Path,
+        e: Endian,
+        only_h: bool,
+    ) -> Result<(), SacError> {
         let header = SacBinary::from(self);
         let mut h_buf = [0; SAC_HEADER_SIZE];
 
         match SacBinary::encode_header(header, &mut h_buf, e) {
             Ok(v) => v,
-            Err(e) => return Err(SacError::Unsupported(e.to_string()))
+            Err(e) => return Err(SacError::Unsupported(e.to_string())),
         };
 
         let d_buf = if only_h {
             let mut f = match File::open(p) {
                 Ok(f) => f,
-                Err(e) => return Err(SacError::IO(e.to_string()))
+                Err(e) => return Err(SacError::IO(e.to_string())),
             };
 
             let mut f_buf = Vec::new();
             match f.read_to_end(&mut f_buf) {
                 Ok(v) => v,
-                Err(e) => return Err(SacError::IO(e.to_string()))
+                Err(e) => return Err(SacError::IO(e.to_string())),
             };
 
             f_buf[SAC_HEADER_SIZE..].to_vec()
@@ -172,12 +177,12 @@ impl Sac {
 
         let mut f = match File::create(p) {
             Ok(v) => v,
-            Err(e) => return Err(SacError::IO(e.to_string()))
+            Err(e) => return Err(SacError::IO(e.to_string())),
         };
 
         match f.write_all(&f_buf) {
             Ok(v) => v,
-            Err(e) => return Err(SacError::IO(e.to_string()))
+            Err(e) => return Err(SacError::IO(e.to_string())),
         };
 
         Ok(())
@@ -200,16 +205,16 @@ impl Sac {
     }
 
     /**
-     [SacFileType::XYZ] is not supported
-     */
+    [SacFileType::XYZ] is not supported
+    */
     pub unsafe fn write_unchecked(&self) -> Result<(), SacError> {
         let path = Path::new(&self.path);
         self.write_out_unchecked(path, self.endian, false)
     }
 
     /**
-     [SacFileType::XYZ] is not supported
-     */
+    [SacFileType::XYZ] is not supported
+    */
     pub unsafe fn write_to_unchecked(&self, path: &Path) -> Result<(), SacError> {
         self.write_out_unchecked(path, self.endian, false)
     }

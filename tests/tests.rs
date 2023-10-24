@@ -88,7 +88,9 @@ mod tests {
     fn test_new() {
         let new = Path::new("tests/test_new.sac");
         let sac = Sac::new(new, Endian::Little);
-        unsafe { sac.write_unchecked().unwrap(); }
+        unsafe {
+            sac.write_unchecked().unwrap();
+        }
 
         let sac = unsafe { Sac::read_unchecked(new, Endian::Little) }.unwrap();
         let y = &sac.y;

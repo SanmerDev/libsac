@@ -5,14 +5,14 @@ use std::fmt::{Display, Formatter};
 #[non_exhaustive]
 pub enum SacError {
     Unsupported(String),
-    IO(String)
+    IO(String),
 }
 
 impl Display for SacError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             SacError::Unsupported(msg) => write!(f, "{}", msg),
-            SacError::IO(msg) => write!(f, "{}", msg)
+            SacError::IO(msg) => write!(f, "{}", msg),
         }
     }
 }
