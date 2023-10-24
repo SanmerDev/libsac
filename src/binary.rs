@@ -3,6 +3,7 @@ use std::array;
 use bincode::{Decode, Encode};
 
 use crate::header::SacHeader;
+use crate::SAC_HEADER_MAJOR_VERSION;
 
 pub(crate) const SAC_INT_UNDEF: i32 = -12345;
 pub(crate) const SAC_BOOL_UNDEF: i32 = 0;
@@ -148,6 +149,11 @@ pub struct SacBinary {
 impl Default for SacBinary {
     fn default() -> Self {
         SacBinary {
+            // init values
+            nvhdr: SAC_HEADER_MAJOR_VERSION,
+            npts: 0,
+
+            // undef
             delta: SAC_FLOAT_UNDEF,
             depmin: SAC_FLOAT_UNDEF,
             depmax: SAC_FLOAT_UNDEF,
@@ -191,10 +197,8 @@ impl Default for SacBinary {
             nzmin: SAC_INT_UNDEF,
             nzsec: SAC_INT_UNDEF,
             nzmsec: SAC_INT_UNDEF,
-            nvhdr: SAC_INT_UNDEF,
             norid: SAC_INT_UNDEF,
             nevid: SAC_INT_UNDEF,
-            npts: SAC_INT_UNDEF,
             internal4: SAC_INT_UNDEF,
             nwfid: SAC_INT_UNDEF,
             nxsize: SAC_INT_UNDEF,
