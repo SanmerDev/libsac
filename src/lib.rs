@@ -81,13 +81,17 @@ impl SacBinary {
 impl SacHeader {
     pub(crate) fn check_header(&self) -> Result<(), SacError> {
         if self.nvhdr != SAC_HEADER_MAJOR_VERSION {
-            let msg = format!("Sac Header Version: {}", self.nvhdr);
+            let msg = format!("Unsupported header version: {}", self.nvhdr);
             return Err(SacError::Unsupported(msg));
         }
 
         match self.iftype {
-            SacFileType::XYZ | SacFileType::Unknown => {
-                let msg = format!("Sac File Type: {:?}", self.iftype);
+            SacFileType::XYZ => {
+                let msg = format!("Unsupported file type: {:?}", self.iftype);
+                Err(SacError::Unsupported(msg))
+            }
+            SacFileType::Unknown(_) => {
+                let msg = format!("Unknown file type: {:?}", self.iftype);
                 Err(SacError::Unsupported(msg))
             }
             _ => Ok(()),

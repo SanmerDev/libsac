@@ -1,5 +1,3 @@
-use crate::binary::SAC_INT_UNDEF;
-
 const ITIME: i32 = 1;
 const IRLIM: i32 = 2;
 const IAMPH: i32 = 3;
@@ -14,12 +12,19 @@ pub enum SacFileType {
     AmpPhase = IAMPH,
     XY = IXY,
     XYZ = IXYZ,
-    Unknown = SAC_INT_UNDEF,
+    Unknown(i32),
 }
 
 impl From<SacFileType> for i32 {
     fn from(t: SacFileType) -> i32 {
-        t as i32
+        match t {
+            SacFileType::Time => ITIME,
+            SacFileType::RealImag => IRLIM,
+            SacFileType::AmpPhase => IAMPH,
+            SacFileType::XY => IXY,
+            SacFileType::XYZ => IXYZ,
+            SacFileType::Unknown(v) => v,
+        }
     }
 }
 
@@ -31,7 +36,7 @@ impl From<i32> for SacFileType {
             IAMPH => SacFileType::AmpPhase,
             IXY => SacFileType::XY,
             IXYZ => SacFileType::XYZ,
-            _ => SacFileType::Unknown,
+            _ => SacFileType::Unknown(t),
         }
     }
 }
