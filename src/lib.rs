@@ -134,13 +134,13 @@ impl Sac {
 
         let data = SacBinary::decode_data(d_buf, e);
         if sac.iftype == SacFileType::Time && sac.leven {
-            sac.y = data;
+            sac.first = data;
             return Ok(sac);
         }
 
         let size = sac.npts as usize;
-        sac.x = data[..size].to_vec();
-        sac.y = data[size..].to_vec();
+        sac.first = data[..size].to_vec();
+        sac.second = data[size..].to_vec();
         Ok(sac)
     }
 
@@ -168,8 +168,8 @@ impl Sac {
 
             f_buf[SAC_HEADER_SIZE..].to_vec()
         } else {
-            let mut data = self.x.clone();
-            data.extend_from_slice(&self.y);
+            let mut data = self.first.clone();
+            data.extend_from_slice(&self.second);
 
             SacBinary::encode_data(&data, e)
         };

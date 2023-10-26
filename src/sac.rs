@@ -10,9 +10,8 @@ pub struct Sac {
     pub(crate) path: String,
     pub(crate) endian: Endian,
     pub(crate) h: SacHeader,
-
-    pub x: Vec<f32>,
-    pub y: Vec<f32>,
+    pub first: Vec<f32>,
+    pub second: Vec<f32>,
 }
 
 impl Deref for Sac {
@@ -37,9 +36,8 @@ impl Sac {
             path: p,
             endian: e,
             h: SacHeader::from(b),
-
-            x: Vec::with_capacity(0),
-            y: Vec::with_capacity(0),
+            first: Vec::with_capacity(0),
+            second: Vec::with_capacity(0),
         }
     }
 

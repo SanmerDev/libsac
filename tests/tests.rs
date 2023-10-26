@@ -9,7 +9,7 @@ mod tests {
     fn test_read() {
         let path = Path::new("tests/test.sac");
         let sac = Sac::read(path, Endian::Little).unwrap();
-        let y = &sac.y;
+        let y = &sac.first;
 
         assert_eq!(sac.delta, 0.01);
         assert_eq!(sac.npts, 1000);
@@ -24,7 +24,7 @@ mod tests {
     fn test_read_header() {
         let path = Path::new("tests/test.sac");
         let sac = Sac::read_header(path, Endian::Little).unwrap();
-        let y = &sac.y;
+        let y = &sac.first;
 
         assert_eq!(sac.delta, 0.01);
         assert_eq!(sac.npts, 1000);
@@ -45,7 +45,7 @@ mod tests {
         sac.write_to(new).unwrap();
 
         let sac = Sac::read(new, Endian::Big).unwrap();
-        let y = &sac.y;
+        let y = &sac.first;
 
         assert_eq!(sac.delta, 0.01);
         assert_eq!(sac.npts, 1000);
@@ -71,7 +71,7 @@ mod tests {
         sac.write_header().unwrap();
 
         let sac = Sac::read(new, Endian::Little).unwrap();
-        let y = &sac.y;
+        let y = &sac.first;
 
         assert_eq!(sac.t[0], 10.0);
         assert_eq!(sac.kt[0], "P");
@@ -92,7 +92,7 @@ mod tests {
         sac.write().unwrap();
 
         let sac = Sac::read(new, Endian::Little).unwrap();
-        let y = &sac.y;
+        let y = &sac.first;
 
         assert_eq!(sac.delta, -12345.0);
         assert_eq!(sac.npts, 0);
