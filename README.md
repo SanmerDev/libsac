@@ -3,7 +3,7 @@ A Rust library for reading/writing SAC data
 
 ## usage
 ```toml
-libsac = { git = "https://github.com/ya0211/libsac.git", branch = "main" }
+libsac = { git = "https://github.com/SanmerDev/libsac.git", branch = "main" }
 ```
 
 ## demo
