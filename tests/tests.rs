@@ -6,7 +6,7 @@ mod tests {
     use libsac::{Endian, Sac, SacFileType};
 
     #[test]
-    fn test_read() {
+    fn read() {
         let path = Path::new("tests/test.sac");
         let sac = Sac::read(path, Endian::Little).unwrap();
         let y = &sac.first;
@@ -21,7 +21,7 @@ mod tests {
     }
 
     #[test]
-    fn test_read_header() {
+    fn read_header() {
         let path = Path::new("tests/test.sac");
         let sac = Sac::read_header(path, Endian::Little).unwrap();
         let y = &sac.first;
@@ -36,7 +36,7 @@ mod tests {
     }
 
     #[test]
-    fn test_write() {
+    fn write() {
         let path = Path::new("tests/test.sac");
         let mut sac = Sac::read(path, Endian::Little).unwrap();
 
@@ -59,7 +59,7 @@ mod tests {
     }
 
     #[test]
-    fn test_write_header() {
+    fn write_header() {
         let path = Path::new("tests/test.sac");
         let new = Path::new("tests/test_h.sac");
         fs::copy(path, new).unwrap();
@@ -85,7 +85,7 @@ mod tests {
     }
 
     #[test]
-    fn test_new() {
+    fn new() {
         let new = Path::new("tests/test_new.sac");
         let mut sac = Sac::new(new, Endian::Little);
         sac.iftype = SacFileType::XY;
