@@ -13,6 +13,7 @@ pub(crate) const SAC_STR16_UNDEF: [u8; 16] = [
     b'-', b'1', b'2', b'3', b'4', b'5', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ', b' ',
 ];
 
+#[inline]
 fn write_string<const N: usize>(v: &String) -> [u8; N] {
     let mut bytes: [u8; N] = [b' '; N];
     let v_bytes = v.as_bytes();
@@ -23,6 +24,7 @@ fn write_string<const N: usize>(v: &String) -> [u8; N] {
     bytes
 }
 
+#[inline]
 fn write_string_array<const M: usize, const N: usize>(v: &[String; N]) -> [[u8; M]; N] {
     let values: Vec<[u8; M]> = v.iter().map(|s| write_string(s)).collect();
 
@@ -32,6 +34,7 @@ fn write_string_array<const M: usize, const N: usize>(v: &[String; N]) -> [[u8; 
     array
 }
 
+#[inline]
 fn read_string<const N: usize>(v: &[u8; N]) -> String {
     std::str::from_utf8(v)
         .unwrap_or("-12345")
@@ -39,6 +42,7 @@ fn read_string<const N: usize>(v: &[u8; N]) -> String {
         .to_string()
 }
 
+#[inline]
 fn read_string_array<const M: usize, const N: usize>(v: &[[u8; M]; N]) -> [String; N] {
     let values: Vec<String> = v.iter().map(|b| read_string(b)).collect();
 
