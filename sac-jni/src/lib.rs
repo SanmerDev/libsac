@@ -532,7 +532,9 @@ pub unsafe extern "system" fn Java_dev_sanmer_sac_io_Sac_getHeader<'local>(
         Ok(obj) => obj,
         Err(err) => {
             env.throw_new("java/lang/IllegalArgumentException", err.to_string())
-                .unwrap();
+                .unwrap_or_else(|e| {
+                    eprintln!("{e}");
+                });
 
             JObject::null()
         }
@@ -551,7 +553,9 @@ pub unsafe extern "system" fn Java_dev_sanmer_sac_io_Sac_setHeader(
         Ok(h) => sac.set_header(h),
         Err(err) => {
             env.throw_new("java/lang/IllegalArgumentException", err.to_string())
-                .unwrap();
+                .unwrap_or_else(|e| {
+                    eprintln!("{e}");
+                });
         }
     }
 }
