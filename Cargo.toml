@@ -1,8 +1,11 @@
-[package]
-name = "libsac"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+resolver = "2"
+members = [
+    "sac",
+    "sac-jni"
+]
 
-[dependencies]
-bincode = "2.0.0-rc.3"
-byteorder = "1.5.0"
+[workspace.package]
+version = "0.1.0"
+license = "Apache-2.0"
+edition = "2021"

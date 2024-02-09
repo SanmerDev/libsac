@@ -1,0 +1,9 @@
+[package]
+name = "sac-jni"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[dependencies]
+sac = { path = "../sac" }
+jni = "0.21.1"

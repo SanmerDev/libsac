@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 
-use libsac::{Endian, Sac, SacFileType};
+use sac::{Endian, Sac, SacFileType};
 
 #[test]
 fn read() {
