@@ -3,13 +3,15 @@ A Rust library for reading/writing SAC data
 
 ## usage
 ```toml
-libsac = { git = "https://github.com/SanmerDev/libsac.git", branch = "main" }
+[dependencies.sac]
+git = "https://github.com/SanmerDev/libsac.git"
+package = "sac"
 ```
 
 ## demo
 ```rust
 use std::path::Path;
-use libsac::{Endian, Sac};
+use sac::{Endian, Sac};
 
 fn main() {
     let path = Path::new("tests/test.sac");
