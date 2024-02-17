@@ -1,8 +1,8 @@
+use alloc::string::String;
+
 use crate::binary::SacBinary;
 use crate::enums::SacFileType;
 
-// noinspection SpellCheckingInspection
-#[derive(Debug, Clone)]
 pub struct SacHeader {
     pub delta: f32,
     pub depmin: f32,
