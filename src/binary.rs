@@ -1,4 +1,7 @@
-use std::array;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use core::array;
+use core::default::Default;
 
 use bincode::{Decode, Encode};
 
@@ -36,7 +39,7 @@ fn write_string_array<const M: usize, const N: usize>(v: &[String; N]) -> [[u8; 
 
 #[inline]
 fn read_string<const N: usize>(v: &[u8; N]) -> String {
-    std::str::from_utf8(v)
+    core::str::from_utf8(v)
         .unwrap_or("-12345")
         .trim()
         .to_string()
@@ -52,8 +55,7 @@ fn read_string_array<const M: usize, const N: usize>(v: &[[u8; M]; N]) -> [Strin
     array
 }
 
-// noinspection SpellCheckingInspection
-#[derive(Debug, Encode, Decode)]
+#[derive(Encode, Decode)]
 pub struct SacBinary {
     // float
     delta: f32,

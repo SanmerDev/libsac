@@ -5,7 +5,14 @@ A Rust library for reading/writing SAC data
 ```toml
 [dependencies.sac]
 git = "https://github.com/SanmerDev/libsac.git"
-package = "sac"
+```
+
+## usage (no-std)
+```toml
+[dependencies.sac]
+git = "https://github.com/SanmerDev/libsac.git"
+default-features = false
+features = ["alloc"]
 ```
 
 ## demo

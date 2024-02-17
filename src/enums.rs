@@ -2,7 +2,7 @@ const ITIME: i32 = 1;
 const IRLIM: i32 = 2;
 const IAMPH: i32 = 3;
 const IXY: i32 = 4;
-const IXYZ: i32 = 51;
+const _IXYZ: i32 = 51;
 
 #[repr(i32)]
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -11,7 +11,6 @@ pub enum SacFileType {
     RealImag = IRLIM,
     AmpPhase = IAMPH,
     XY = IXY,
-    XYZ = IXYZ,
     Unknown(i32),
 }
 
@@ -22,7 +21,6 @@ impl From<SacFileType> for i32 {
             SacFileType::RealImag => IRLIM,
             SacFileType::AmpPhase => IAMPH,
             SacFileType::XY => IXY,
-            SacFileType::XYZ => IXYZ,
             SacFileType::Unknown(v) => v,
         }
     }
@@ -35,7 +33,6 @@ impl From<i32> for SacFileType {
             IRLIM => SacFileType::RealImag,
             IAMPH => SacFileType::AmpPhase,
             IXY => SacFileType::XY,
-            IXYZ => SacFileType::XYZ,
             _ => SacFileType::Unknown(t),
         }
     }
