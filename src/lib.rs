@@ -6,9 +6,9 @@ use alloc::vec::Vec;
 #[cfg(feature = "std")]
 use std::path::Path;
 
-use bincode::{decode_from_slice, encode_into_slice};
 use bincode::config::{BigEndian, Configuration, Fixint, LittleEndian};
 use bincode::error::{DecodeError, EncodeError};
+use bincode::{decode_from_slice, encode_into_slice};
 use byteorder::{BigEndian as Big, ByteOrder, LittleEndian as Little};
 
 use crate::binary::SacBinary;
@@ -83,18 +83,17 @@ impl SacBinary {
     }
 }
 
-impl SacHeader {
-    #[inline]
-    fn check_header(&self) -> Option<()> {
-        if self.nvhdr != SAC_HEADER_MAJOR_VERSION {
+macro_rules! check_header {
+    ($self:ident) => {
+        if $self.nvhdr != SAC_HEADER_MAJOR_VERSION {
             return None;
         }
 
-        match self.iftype {
-            SacFileType::Unknown(_) => None,
-            _ => Some(()),
-        }
-    }
+        match $self.iftype {
+            SacFileType::Unknown(_) => return None,
+            _ => {}
+        };
+    };
 }
 
 impl Sac {
@@ -116,7 +115,7 @@ impl Sac {
         };
 
         let mut sac = Sac::build(&binary);
-        sac.check_header()?;
+        check_header!(sac);
 
         let data = SacBinary::decode_data(d_src, endian);
         if sac.iftype == SacFileType::Time && sac.leven {
@@ -131,7 +130,7 @@ impl Sac {
     }
 
     pub fn to_slice(&self, endian: Endian) -> Option<Vec<u8>> {
-        self.check_header()?;
+        check_header!(self);
         let mut h_val = [0; SAC_HEADER_SIZE];
 
         let header = SacBinary::from(self);
