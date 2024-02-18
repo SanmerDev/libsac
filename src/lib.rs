@@ -1,16 +1,14 @@
-#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
-#[cfg(feature = "std")]
-extern crate std;
 
 use alloc::vec::Vec;
 #[cfg(feature = "std")]
 use std::path::Path;
 
+use bincode::{decode_from_slice, encode_into_slice};
 use bincode::config::{BigEndian, Configuration, Fixint, LittleEndian};
 use bincode::error::{DecodeError, EncodeError};
-use bincode::{decode_from_slice, encode_into_slice};
 use byteorder::{BigEndian as Big, ByteOrder, LittleEndian as Little};
 
 use crate::binary::SacBinary;
@@ -23,7 +21,7 @@ mod enums;
 mod header;
 mod sac;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub enum Endian {
     Little,
     Big,

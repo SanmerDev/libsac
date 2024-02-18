@@ -1,7 +1,6 @@
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::array;
-use core::default::Default;
 
 use bincode::{Decode, Encode};
 

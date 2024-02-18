@@ -5,7 +5,7 @@ const IXY: i32 = 4;
 const _IXYZ: i32 = 51;
 
 #[repr(i32)]
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum SacFileType {
     Time = ITIME,
     RealImag = IRLIM,
