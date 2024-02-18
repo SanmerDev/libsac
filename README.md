@@ -23,13 +23,13 @@ use sac::{Endian, Sac};
 fn main() {
     let path = Path::new("tests/test.sac");
 
-    let mut sac = Sac::read_header(path, Endian::Little).unwrap();
+    let mut sac = Sac::from_file(path, Endian::Little).unwrap();
     sac.t[0] = 10.0;
-    sac.kt[0] = "P".to_string();
-    sac.kstnm = "VDC".to_string();
-    sac.write_header().unwrap();
+    sac.kt[0] = "P".to_owned();
+    sac.kstnm = "VDC".to_owned();
+    sac.to_file(path, Endian::Little).unwrap();
 
-    let sac = Sac::read(path, Endian::Little).unwrap();
+    let sac = Sac::from_file(path, Endian::Little).unwrap();
     let y = &sac.first;
 
     assert_eq!(sac.t[0], 10.0);
