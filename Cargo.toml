@@ -17,3 +17,4 @@ default-features = false
 default = ["std"]
 std = ["bincode/std", "byteorder/std"]
 alloc = ["bincode/alloc"]
+unstable = []

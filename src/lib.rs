@@ -2,6 +2,7 @@
 
 extern crate alloc;
 
+use alloc::format;
 use alloc::vec::Vec;
 #[cfg(feature = "std")]
 use std::path::Path;
@@ -13,11 +14,13 @@ use byteorder::{BigEndian as Big, ByteOrder, LittleEndian as Little};
 
 use crate::binary::SacBinary;
 pub use crate::enums::SacFileType;
+use crate::error::SacError;
 pub use crate::header::SacHeader;
 pub use crate::sac::Sac;
 
 mod binary;
 mod enums;
+pub mod error;
 mod header;
 mod sac;
 
@@ -86,13 +89,17 @@ impl SacBinary {
 macro_rules! check_header {
     ($self:ident) => {
         if $self.nvhdr != SAC_HEADER_MAJOR_VERSION {
-            return None;
+            let msg = format!("illegal major version, nvhdr = {}", $self.nvhdr);
+            return Err(SacError::custom(msg));
         }
 
         match $self.iftype {
-            SacFileType::Unknown(_) => return None,
+            SacFileType::Unknown(v) => {
+                let msg = format!("illegal file type, iftype = {}", v);
+                return Err(SacError::custom(msg));
+            },
             _ => {}
-        };
+        }
     };
 }
 
@@ -101,9 +108,10 @@ impl Sac {
         self.h = h
     }
 
-    pub fn from_slice(src: &[u8], endian: Endian) -> Option<Sac> {
+    pub unsafe fn from_slice_unchecked(src: &[u8], endian: Endian) -> error::Result<Sac> {
         if src.len() < SAC_HEADER_SIZE {
-            return None;
+            let msg = format!("illegal length, src = {} < {}", src.len(), SAC_HEADER_SIZE);
+            return Err(SacError::custom(msg));
         }
 
         let h_src = &src[..SAC_HEADER_SIZE];
@@ -111,32 +119,36 @@ impl Sac {
 
         let binary = match SacBinary::decode_header(h_src, endian) {
             Ok(b) => b,
-            Err(_) => return None,
+            Err(err) => return Err(SacError::custom(err)),
         };
 
         let mut sac = Sac::build(&binary);
-        check_header!(sac);
 
         let data = SacBinary::decode_data(d_src, endian);
         if sac.iftype == SacFileType::Time && sac.leven {
             sac.first = data;
-            return Some(sac);
+            return Ok(sac);
         }
 
         let size = sac.npts as usize;
         sac.first = data[..size].to_vec();
         sac.second = data[size..].to_vec();
-        Some(sac)
+        Ok(sac)
     }
 
-    pub fn to_slice(&self, endian: Endian) -> Option<Vec<u8>> {
-        check_header!(self);
+    pub fn from_slice(src: &[u8], endian: Endian) -> error::Result<Sac> {
+        let sac = unsafe { Self::from_slice_unchecked(src, endian) }?;
+        check_header!(sac);
+        Ok(sac)
+    }
+
+    pub unsafe fn to_slice_unchecked(&self, endian: Endian) -> error::Result<Vec<u8>> {
         let mut h_val = [0; SAC_HEADER_SIZE];
 
         let header = SacBinary::from(self);
         match SacBinary::encode_header(header, &mut h_val, endian) {
             Ok(v) => v,
-            Err(_) => return None,
+            Err(err) => return Err(SacError::custom(err)),
         };
 
         let mut data = self.first.clone();
@@ -146,44 +158,49 @@ impl Sac {
         let mut val = h_val.to_vec();
         val.extend_from_slice(&d_val);
 
-        Some(val)
+        Ok(val)
+    }
+
+    pub fn to_slice(&self, endian: Endian) -> error::Result<Vec<u8>> {
+        check_header!(self);
+        unsafe { self.to_slice_unchecked(endian) }
     }
 
     #[cfg(feature = "std")]
-    pub fn from_file(path: &Path, endian: Endian) -> Option<Sac> {
+    pub fn from_file(path: &Path, endian: Endian) -> error::Result<Sac> {
         use std::fs::File;
         use std::io::Read;
 
         let mut f = match File::open(path) {
             Ok(f) => f,
-            Err(_) => return None,
+            Err(err) => return Err(SacError::custom(err)),
         };
 
         let mut src = Vec::new();
         match f.read_to_end(&mut src) {
             Ok(v) => v,
-            Err(_) => return None,
+            Err(err) => return Err(SacError::custom(err)),
         };
 
         Sac::from_slice(&src, endian)
     }
 
     #[cfg(feature = "std")]
-    pub fn to_file(&self, path: &Path, endian: Endian) -> Option<()> {
+    pub fn to_file(&self, path: &Path, endian: Endian) -> error::Result<()> {
         use std::fs::File;
         use std::io::Write;
 
         let mut f = match File::create(path) {
             Ok(v) => v,
-            Err(_) => return None,
+            Err(err) => return Err(SacError::custom(err)),
         };
 
         let val = self.to_slice(endian)?;
         match f.write_all(&val) {
             Ok(v) => v,
-            Err(_) => return None,
+            Err(err) => return Err(SacError::custom(err)),
         };
 
-        Some(())
+        Ok(())
     }
 }
