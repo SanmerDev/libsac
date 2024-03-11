@@ -33,7 +33,7 @@ impl Sac {
         }
     }
 
-    pub fn empty() -> Self {
+    pub fn new() -> Self {
         Sac::build(&SacBinary::default())
     }
 }

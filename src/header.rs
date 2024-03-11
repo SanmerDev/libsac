@@ -82,7 +82,7 @@ pub struct SacHeader {
 }
 
 impl SacHeader {
-    pub fn empty() -> Self {
+    pub fn new() -> Self {
         let b = SacBinary::default();
         SacHeader::from(&b)
     }

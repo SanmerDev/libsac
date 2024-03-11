@@ -43,7 +43,7 @@ fn write() {
 #[test]
 fn new() {
     let new = Path::new("tests/test_new.sac");
-    let mut sac = Sac::empty();
+    let mut sac = Sac::new();
     sac.iftype = SacFileType::Time;
     sac.to_file(new, Endian::Little).unwrap();
 
