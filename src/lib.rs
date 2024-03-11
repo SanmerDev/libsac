@@ -89,13 +89,13 @@ impl SacBinary {
 macro_rules! check_header {
     ($self:ident) => {
         if $self.nvhdr != SAC_HEADER_MAJOR_VERSION {
-            let msg = format!("illegal major version, nvhdr = {}", $self.nvhdr);
+            let msg = format!("Unsupported major version (nvhdr = {})", $self.nvhdr);
             return Err(SacError::custom(msg));
         }
 
         match $self.iftype {
             SacFileType::Unknown(v) => {
-                let msg = format!("illegal file type, iftype = {}", v);
+                let msg = format!("Unsupported file type (iftype = {})", v);
                 return Err(SacError::custom(msg));
             },
             _ => {}
@@ -110,7 +110,7 @@ impl Sac {
 
     pub unsafe fn from_slice_unchecked(src: &[u8], endian: Endian) -> error::Result<Sac> {
         if src.len() < SAC_HEADER_SIZE {
-            let msg = format!("illegal length, src = {} < {}", src.len(), SAC_HEADER_SIZE);
+            let msg = format!("Incomplete data, raw length ({}) < header size ({})", src.len(), SAC_HEADER_SIZE);
             return Err(SacError::custom(msg));
         }
 
@@ -130,7 +130,12 @@ impl Sac {
             return Ok(sac);
         }
 
-        let size = sac.npts as usize;
+        let size = usize::try_from(sac.npts).unwrap_or(data.len());
+        if size > data.len() { 
+            let msg = format!("Incomplete data, length ({}) < npts ({})", data.len(), size);
+            return Err(SacError::custom(msg))
+        }
+        
         sac.first = data[..size].to_vec();
         sac.second = data[size..].to_vec();
         Ok(sac)
