@@ -66,7 +66,7 @@ impl SacBinary {
             Endian::Big => Big::read_f32,
         };
 
-        src.chunks(4).map(|b| read_f32(b)).collect()
+        src.chunks_exact(4).map(|b| read_f32(b)).collect()
     }
 
     #[inline]
@@ -97,7 +97,7 @@ macro_rules! check_header {
             SacFileType::Unknown(v) => {
                 let msg = format!("Unsupported file type (iftype = {})", v);
                 return Err(SacError::custom(msg));
-            },
+            }
             _ => {}
         }
     };
@@ -110,7 +110,11 @@ impl Sac {
 
     pub unsafe fn from_slice_unchecked(src: &[u8], endian: Endian) -> error::Result<Sac> {
         if src.len() < SAC_HEADER_SIZE {
-            let msg = format!("Incomplete data, raw length ({}) < header size ({})", src.len(), SAC_HEADER_SIZE);
+            let msg = format!(
+                "Incomplete data, raw length ({}) < header size ({})",
+                src.len(),
+                SAC_HEADER_SIZE
+            );
             return Err(SacError::custom(msg));
         }
 
@@ -131,11 +135,11 @@ impl Sac {
         }
 
         let size = usize::try_from(sac.npts).unwrap_or(data.len());
-        if size > data.len() { 
+        if size > data.len() {
             let msg = format!("Incomplete data, length ({}) < npts ({})", data.len(), size);
-            return Err(SacError::custom(msg))
+            return Err(SacError::custom(msg));
         }
-        
+
         sac.first = data[..size].to_vec();
         sac.second = data[size..].to_vec();
         Ok(sac)
@@ -187,7 +191,7 @@ impl Sac {
             Err(err) => return Err(SacError::custom(err)),
         };
 
-        Sac::from_slice(&src, endian)
+        Self::from_slice(&src, endian)
     }
 
     #[cfg(feature = "std")]
