@@ -109,26 +109,24 @@ impl Sac {
     }
 
     pub unsafe fn from_slice_unchecked(src: &[u8], endian: Endian) -> error::Result<Sac> {
-        if src.len() < SAC_HEADER_SIZE {
-            let msg = format!(
-                "Incomplete data, raw length ({}) < header size ({})",
-                src.len(),
-                SAC_HEADER_SIZE
-            );
-            return Err(SacError::custom(msg));
-        }
+        let mut h_src = Vec::new();
+        let mut d_src = Vec::new();
 
-        let h_src = &src[..SAC_HEADER_SIZE];
-        let d_src = &src[SAC_HEADER_SIZE..];
+        if src.len() > SAC_HEADER_SIZE {
+            h_src.extend_from_slice(&src[..SAC_HEADER_SIZE]);
+            d_src.extend_from_slice(&src[SAC_HEADER_SIZE..]);
+        } else {
+            h_src.extend_from_slice(src);
+        };
 
-        let binary = match SacBinary::decode_header(h_src, endian) {
+        let binary = match SacBinary::decode_header(&h_src, endian) {
             Ok(b) => b,
             Err(err) => return Err(SacError::custom(err)),
         };
 
         let mut sac = Sac::build(&binary);
 
-        let data = SacBinary::decode_data(d_src, endian);
+        let data = SacBinary::decode_data(&d_src, endian);
         if sac.iftype == SacFileType::Time && sac.leven {
             sac.first = data;
             return Ok(sac);
@@ -136,12 +134,12 @@ impl Sac {
 
         let size = usize::try_from(sac.npts).unwrap_or(data.len());
         if size > data.len() {
-            let msg = format!("Incomplete data, length ({}) < npts ({})", data.len(), size);
-            return Err(SacError::custom(msg));
+            sac.first = data
+        } else {
+            sac.first = data[..size].to_vec();
+            sac.second = data[size..].to_vec();
         }
 
-        sac.first = data[..size].to_vec();
-        sac.second = data[size..].to_vec();
         Ok(sac)
     }
 
@@ -174,8 +172,10 @@ impl Sac {
         check_header!(self);
         unsafe { self.to_slice_unchecked(endian) }
     }
+}
 
-    #[cfg(feature = "std")]
+#[cfg(feature = "std")]
+impl Sac {
     pub fn from_file(path: &Path, endian: Endian) -> error::Result<Sac> {
         use std::fs::File;
         use std::io::Read;
@@ -194,7 +194,6 @@ impl Sac {
         Self::from_slice(&src, endian)
     }
 
-    #[cfg(feature = "std")]
     pub fn to_file(&self, path: &Path, endian: Endian) -> error::Result<()> {
         use std::fs::File;
         use std::io::Write;
